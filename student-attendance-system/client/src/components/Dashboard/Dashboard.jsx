@@ -208,17 +208,17 @@ const Dashboard = () => {
                 {recentAttendance.length > 0 ? (
                     <div className="space-y-3">
                         {recentAttendance.map((record, index) => (
-                            <div key={index} className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-3 transition-all duration-200 hover:bg-zinc-800">
-                                <div className="flex items-center space-x-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-800">
+                            <div key={index} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-zinc-800 bg-zinc-950 p-3 transition-all duration-200 hover:bg-zinc-800">
+                                <div className="flex items-center space-x-3 min-w-0">
+                                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-zinc-800">
                                         <span className="font-semibold text-zinc-100">{record.studentName?.charAt(0) || 'S'}</span>
                                     </div>
-                                    <div>
-                                        <p className="font-medium text-zinc-100">{record.studentName}</p>
-                                        <p className="text-sm text-zinc-500">ID: {record.studentRollNo}</p>
+                                    <div className="min-w-0">
+                                        <p className="font-medium text-zinc-100 truncate">{record.studentName}</p>
+                                        <p className="text-sm text-zinc-500 truncate">ID: {record.studentRollNo}</p>
                                     </div>
                                 </div>
-                                <span className={`rounded-xl px-3 py-1 text-xs font-medium ${record.status === 'present' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
+                                <span className={`flex-shrink-0 rounded-xl px-3 py-1 text-xs font-medium ${record.status === 'present' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
                                     {record.status?.charAt(0).toUpperCase() + record.status?.slice(1)}
                                 </span>
                             </div>

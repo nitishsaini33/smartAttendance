@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import attendanceService from '../../services/attendanceService';
-import { Camera, CameraOff, Users, User, CheckCircle, AlertCircle, Scan } from 'lucide-react';
+import { Camera, CameraOff, Users, User, CheckCircle, AlertCircle, Scan, FlipHorizontal } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const FaceAttendance = ({ onAttendanceMarked }) => {
@@ -12,6 +12,7 @@ const FaceAttendance = ({ onAttendanceMarked }) => {
     const [faceApiStatus, setFaceApiStatus] = useState(null);
     const [mode, setMode] = useState('single'); // 'single' or 'multiple'
     const [lastResult, setLastResult] = useState(null);
+    const [facingMode, setFacingMode] = useState('user'); // 'user' (front) or 'environment' (back)
 
     useEffect(() => {
         checkFaceApiStatus();
@@ -31,20 +32,24 @@ const FaceAttendance = ({ onAttendanceMarked }) => {
         }
     };
 
-    const startCamera = async () => {
+    const startCamera = async (facing = facingMode) => {
+        // Stop any existing stream first
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+
         try {
             const mediaStream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     width: { ideal: 1280 },
                     height: { ideal: 720 },
-                    facingMode: 'user'
+                    facingMode: facing
                 }
             });
 
             setStream(mediaStream);
             setIsCameraOn(true);
 
-            // Wait for next tick to ensure video element is rendered
             setTimeout(() => {
                 if (videoRef.current) {
                     videoRef.current.srcObject = mediaStream;
@@ -67,12 +72,18 @@ const FaceAttendance = ({ onAttendanceMarked }) => {
         setIsCameraOn(false);
     };
 
+    const flipCamera = async () => {
+        const newFacing = facingMode === 'user' ? 'environment' : 'user';
+        setFacingMode(newFacing);
+        await startCamera(newFacing);
+        toast.success(newFacing === 'user' ? 'Switched to front camera' : 'Switched to back camera');
+    };
+
     const captureAndRecognize = async () => {
         if (!videoRef.current || !canvasRef.current) return;
 
         const video = videoRef.current;
 
-        // Check if video is ready
         if (video.readyState < 2) {
             toast.error('Camera not ready. Please wait a moment and try again.');
             return;
@@ -84,7 +95,6 @@ const FaceAttendance = ({ onAttendanceMarked }) => {
         try {
             const canvas = canvasRef.current;
 
-            // Use actual video dimensions
             const width = video.videoWidth || 1280;
             const height = video.videoHeight || 720;
 
@@ -140,7 +150,7 @@ const FaceAttendance = ({ onAttendanceMarked }) => {
                 <div className="mx-auto max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 text-left">
                     <p className="mb-2 text-sm font-medium text-zinc-300">To start the Face API:</p>
                     <code className="block rounded-xl bg-zinc-900 px-2 py-1 text-xs text-zinc-200">
-                        cd student-attendance-system/server/python && python api_server.py
+                        cd student-attendance-system/server/python &amp;&amp; python api_server.py
                     </code>
                 </div>
                 <button onClick={checkFaceApiStatus} className="btn-primary mt-4">
@@ -152,19 +162,41 @@ const FaceAttendance = ({ onAttendanceMarked }) => {
 
     return (
         <div>
+            {/* Mode toggle */}
             <div className="mb-4 flex gap-2">
-                <button onClick={() => setMode('single')} className={`flex-1 rounded-2xl border px-4 py-2.5 font-medium transition-all duration-200 flex items-center justify-center gap-2 ${mode === 'single' ? 'border-zinc-700 bg-zinc-800 text-white' : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'}`}>
+                <button
+                    onClick={() => setMode('single')}
+                    className={`flex-1 rounded-2xl border px-4 py-2.5 font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                        mode === 'single'
+                            ? 'border-zinc-700 bg-zinc-800 text-white'
+                            : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+                    }`}
+                >
                     <User className="h-5 w-5" />
-                    Single Face
+                    <span className="hidden xs:inline">Single</span> Face
                 </button>
-                <button onClick={() => setMode('multiple')} className={`flex-1 rounded-2xl border px-4 py-2.5 font-medium transition-all duration-200 flex items-center justify-center gap-2 ${mode === 'multiple' ? 'border-zinc-700 bg-zinc-800 text-white' : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'}`}>
+                <button
+                    onClick={() => setMode('multiple')}
+                    className={`flex-1 rounded-2xl border px-4 py-2.5 font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                        mode === 'multiple'
+                            ? 'border-zinc-700 bg-zinc-800 text-white'
+                            : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+                    }`}
+                >
                     <Users className="h-5 w-5" />
-                    Multiple Faces
+                    <span className="hidden xs:inline">Multiple</span> Faces
                 </button>
             </div>
 
+            {/* Camera view */}
             <div className="relative mb-4 aspect-video overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
-                <video ref={videoRef} autoPlay playsInline muted className={`w-full h-full object-cover ${!isCameraOn ? 'hidden' : ''}`} />
+                <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className={`w-full h-full object-cover ${!isCameraOn ? 'hidden' : ''}`}
+                />
 
                 {!isCameraOn && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
@@ -181,14 +213,27 @@ const FaceAttendance = ({ onAttendanceMarked }) => {
                         </div>
                     </div>
                 )}
+
+                {/* Camera flip button — only visible on mobile when camera is on */}
+                {isCameraOn && (
+                    <button
+                        onClick={flipCamera}
+                        className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-2xl border border-zinc-600 bg-zinc-900/80 px-3 py-2 text-xs font-medium text-zinc-200 backdrop-blur transition hover:bg-zinc-800 md:hidden"
+                        aria-label="Flip camera"
+                    >
+                        <FlipHorizontal className="h-4 w-4" />
+                        Flip
+                    </button>
+                )}
             </div>
 
             {/* Hidden canvas for capture */}
             <canvas ref={canvasRef} className="hidden" />
 
+            {/* Action buttons */}
             <div className="flex gap-3">
                 {!isCameraOn ? (
-                    <button onClick={startCamera} className="flex-1 btn-primary flex items-center justify-center gap-2">
+                    <button onClick={() => startCamera()} className="flex-1 btn-primary flex items-center justify-center gap-2">
                         <Camera className="h-5 w-5" />
                         Start Camera
                     </button>
@@ -198,13 +243,20 @@ const FaceAttendance = ({ onAttendanceMarked }) => {
                             <CameraOff className="h-5 w-5" />
                             Stop
                         </button>
-                        <button onClick={captureAndRecognize} disabled={loading} className="flex-1 btn-success flex items-center justify-center gap-2">
+                        <button
+                            onClick={captureAndRecognize}
+                            disabled={loading}
+                            className="flex-1 btn-success flex items-center justify-center gap-2"
+                        >
                             {loading ? (
                                 <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                             ) : (
                                 <>
                                     <Scan className="h-5 w-5" />
-                                    {mode === 'single' ? 'Mark Attendance' : 'Scan All Faces'}
+                                    <span className="hidden sm:inline">
+                                        {mode === 'single' ? 'Mark Attendance' : 'Scan All Faces'}
+                                    </span>
+                                    <span className="sm:hidden">Scan</span>
                                 </>
                             )}
                         </button>
@@ -212,6 +264,7 @@ const FaceAttendance = ({ onAttendanceMarked }) => {
                 )}
             </div>
 
+            {/* Result panel */}
             {lastResult && (
                 <div className={`mt-4 rounded-2xl border p-4 ${lastResult.success ? 'border-emerald-900 bg-emerald-500/10' : 'border-red-900 bg-red-500/10'}`}>
                     <div className="flex items-start gap-3">
@@ -220,7 +273,7 @@ const FaceAttendance = ({ onAttendanceMarked }) => {
                         ) : (
                             <AlertCircle className="h-6 w-6 text-red-300 flex-shrink-0" />
                         )}
-                        <div>
+                        <div className="min-w-0">
                             <p className={`font-semibold ${lastResult.success ? 'text-emerald-300' : 'text-red-300'}`}>
                                 {lastResult.message}
                             </p>
@@ -235,9 +288,7 @@ const FaceAttendance = ({ onAttendanceMarked }) => {
 
                             {lastResult.success && mode === 'multiple' && (
                                 <div className="mt-2 text-sm text-zinc-300">
-                                    <p className="font-medium">
-                                        Total faces detected: {lastResult.totalFaces}
-                                    </p>
+                                    <p className="font-medium">Total faces detected: {lastResult.totalFaces}</p>
                                     {lastResult.markedStudents && lastResult.markedStudents.length > 0 && (
                                         <div className="mt-1">
                                             <p className="font-semibold text-emerald-300">Marked Present:</p>
