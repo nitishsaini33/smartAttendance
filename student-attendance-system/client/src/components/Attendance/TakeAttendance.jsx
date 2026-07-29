@@ -122,11 +122,11 @@ const TakeAttendance = ({ onAttendanceMarked }) => {
                         <span className="font-semibold text-red-300">{absentCount} Absent</span>
                     </p>
                 </div>
-                <div className="flex gap-2">
-                    <button type="button" onClick={markAllPresent} className="rounded-xl bg-emerald-500/20 px-3 py-1.5 text-sm font-medium text-emerald-300 transition-all duration-200 hover:bg-emerald-500/30">
+                <div className="flex gap-2 w-full sm:w-auto">
+                    <button type="button" onClick={markAllPresent} className="flex-1 sm:flex-none justify-center flex items-center rounded-xl bg-emerald-500/20 px-3 py-2 sm:py-1.5 text-sm font-medium text-emerald-300 transition-all duration-200 hover:bg-emerald-500/30">
                         Mark All Present
                     </button>
-                    <button type="button" onClick={markAllAbsent} className="rounded-xl bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-300 transition-all duration-200 hover:bg-red-500/30">
+                    <button type="button" onClick={markAllAbsent} className="flex-1 sm:flex-none justify-center flex items-center rounded-xl bg-red-500/20 px-3 py-2 sm:py-1.5 text-sm font-medium text-red-300 transition-all duration-200 hover:bg-red-500/30">
                         Mark All Absent
                     </button>
                 </div>

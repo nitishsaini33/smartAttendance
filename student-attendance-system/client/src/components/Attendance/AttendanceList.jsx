@@ -64,24 +64,26 @@ const AttendanceList = () => {
 
     return (
         <div>
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-4">
-                    <span className="rounded-xl bg-emerald-500/20 px-3 py-1.5 text-sm font-semibold text-emerald-300">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+                <div className="flex items-center gap-2 sm:gap-4">
+                    <span className="flex-1 text-center sm:flex-none rounded-xl bg-emerald-500/20 px-3 py-2 sm:py-1.5 text-sm font-semibold text-emerald-300">
                         Present: {presentCount}
                     </span>
-                    <span className="rounded-xl bg-red-500/20 px-3 py-1.5 text-sm font-semibold text-red-300">
+                    <span className="flex-1 text-center sm:flex-none rounded-xl bg-red-500/20 px-3 py-2 sm:py-1.5 text-sm font-semibold text-red-300">
                         Absent: {absentCount}
                     </span>
                 </div>
                 {records.length > 0 && (
-                    <div className="flex gap-2">
-                        <button onClick={handleDownload} className="btn-secondary flex items-center gap-2">
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        <button onClick={handleDownload} className="flex-1 sm:flex-none justify-center btn-secondary flex items-center gap-2 text-sm px-3 py-2">
                             <Download className="h-4 w-4" />
-                            Download CSV
+                            <span className="hidden xs:inline">Download CSV</span>
+                            <span className="xs:hidden">CSV</span>
                         </button>
-                        <button onClick={handleReset} className="btn-danger flex items-center gap-2">
+                        <button onClick={handleReset} className="flex-1 sm:flex-none justify-center btn-danger flex items-center gap-2 text-sm px-3 py-2">
                             <Trash2 className="h-4 w-4" />
-                            Reset Attendance
+                            <span className="hidden xs:inline">Reset Attendance</span>
+                            <span className="xs:hidden">Reset</span>
                         </button>
                     </div>
                 )}

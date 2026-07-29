@@ -81,19 +81,19 @@ const DownloadAttendance = () => {
 
     return (
         <div className="max-w-md mx-auto">
-            <h2 className="text-section mb-4 flex items-center">
-                <Download className="h-5 w-5 mr-2 text-primary" />
+            <h2 className="text-section mb-4 flex items-center text-zinc-100">
+                <Download className="h-5 w-5 mr-2 text-zinc-100" />
                 Download Attendance
             </h2>
 
             {/* Tabs */}
-            <div className="flex border-b border-gray-200 mb-6">
+            <div className="flex border-b border-zinc-800 mb-6">
                 <button
                     onClick={() => setActiveTab('single')}
                     className={`flex-1 py-3 text-center font-medium transition-colors ${
                         activeTab === 'single'
-                            ? 'text-primary border-b-2 border-primary'
-                            : 'text-gray-600 hover:text-gray-800'
+                            ? 'text-zinc-100 border-b-2 border-zinc-100'
+                            : 'text-zinc-500 hover:text-zinc-300'
                     }`}
                 >
                     <Calendar className="h-4 w-4 inline mr-2" />
@@ -103,8 +103,8 @@ const DownloadAttendance = () => {
                     onClick={() => setActiveTab('range')}
                     className={`flex-1 py-3 text-center font-medium transition-colors ${
                         activeTab === 'range'
-                            ? 'text-primary border-b-2 border-primary'
-                            : 'text-gray-600 hover:text-gray-800'
+                            ? 'text-zinc-100 border-b-2 border-zinc-100'
+                            : 'text-zinc-500 hover:text-zinc-300'
                     }`}
                 >
                     <Calendar className="h-4 w-4 inline mr-2" />
@@ -116,11 +116,11 @@ const DownloadAttendance = () => {
                 {/* Single Date Tab */}
                 {activeTab === 'single' && (
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-zinc-300 mb-2">
                             Select Date
                         </label>
                         <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                             <input
                                 type="date"
                                 value={date}
@@ -135,11 +135,11 @@ const DownloadAttendance = () => {
                 {activeTab === 'range' && (
                     <>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-zinc-300 mb-2">
                                 From Date
                             </label>
                             <div className="relative">
-                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                                 <input
                                     type="date"
                                     value={fromDate}
@@ -149,11 +149,11 @@ const DownloadAttendance = () => {
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-zinc-300 mb-2">
                                 To Date
                             </label>
                             <div className="relative">
-                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                                 <input
                                     type="date"
                                     value={toDate}
