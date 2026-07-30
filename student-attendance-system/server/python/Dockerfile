@@ -11,17 +11,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first for layer caching
-COPY requirements.txt .
+# Copy requirements first for layer caching (path relative to repo root)
+COPY student-attendance-system/server/python/requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy application code (path relative to repo root)
+COPY student-attendance-system/server/python/ .
 
 # Expose port
 EXPOSE 8080
 
-# Start with gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--timeout", "120", "--workers", "1", "api_server:app"]
+# Start with gunicorn (Railway injects $PORT automatically)
+CMD gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 1 api_server:app
