@@ -23,6 +23,6 @@ COPY . .
 # Expose port
 EXPOSE 8080
 
-# Start with gunicorn (Railway injects $PORT automatically)
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--timeout", "120", "--workers", "1", "api_server:app"]
+# Start with gunicorn — shell form so $PORT env var is expanded at runtime
+CMD gunicorn --bind 0.0.0.0:${PORT:-8080} --timeout 120 --workers 1 api_server:app
 
