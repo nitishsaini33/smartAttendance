@@ -2,6 +2,9 @@
 HuggingFace Space Model Client
 Replaces local InsightFace by calling the remote Gradio Space:
   https://huggingface.co/spaces/nitishsaini44/baffaloL_model
+
+API endpoint : /process_image
+Response fmt : JSON list of {"bbox": [...], "embedding": [...512 floats...]}
 """
 
 import json
@@ -19,16 +22,15 @@ HF_SPACE_URL = "https://nitishsaini44-baffalol-model.hf.space"
 class HFSpaceModel:
     """
     Wrapper around the remote HuggingFace Gradio Space for face embedding extraction.
-    
+
     Usage:
         model = HFSpaceModel()
         faces = model.get_faces(image_bytes)
-        # faces is a list of dicts: [{"embedding": [...512 floats...]}, ...]
+        # faces is a list of dicts: [{"embedding": np.ndarray(512,)}, ...]
     """
 
     def __init__(self):
         print(f"Connecting to HuggingFace Space: {HF_SPACE_ID}")
-        # Connect to the Gradio Space (uses the persistent hf.space URL)
         self.client = Client(HF_SPACE_URL)
         print("HuggingFace Space client initialized successfully!")
 
@@ -40,8 +42,7 @@ class HFSpaceModel:
             image_bytes: Raw image bytes (JPEG/PNG).
 
         Returns:
-            List of face dicts, each containing at minimum:
-                {"embedding": [float, ...]}
+            List of face dicts: [{"embedding": np.ndarray(512,)}, ...]
             Returns empty list if no faces detected or on error.
         """
         tmp_path = None
@@ -51,20 +52,23 @@ class HFSpaceModel:
                 tmp.write(image_bytes)
                 tmp_path = tmp.name
 
-            # Call the /predict endpoint on the HF Space
+            # Call the /process_image endpoint on the HF Space
             result_string = self.client.predict(
                 image=handle_file(tmp_path),
-                api_name="/predict"
+                api_name="/process_image"
             )
 
-            # The Space returns a JSON string
             if not result_string:
                 print("[HFModel] Empty response from HF Space")
                 return []
 
             result = json.loads(result_string)
 
-            # Normalise response to a list of face dicts with "embedding" key
+            # Check if the space returned an error dict
+            if isinstance(result, dict) and "error" in result:
+                print(f"[HFModel] HF Space returned error: {result['error']}")
+                return []
+
             faces = self._parse_response(result)
             print(f"[HFModel] Received {len(faces)} face(s) from HF Space")
             return faces
@@ -76,7 +80,6 @@ class HFSpaceModel:
             print(f"[HFModel] Error calling HF Space: {e}")
             return []
         finally:
-            # Clean up temp file
             if tmp_path and os.path.exists(tmp_path):
                 try:
                     os.unlink(tmp_path)
@@ -85,37 +88,26 @@ class HFSpaceModel:
 
     def _parse_response(self, result) -> list:
         """
-        Normalise the HF Space response into a consistent list of face dicts.
+        Parse the HF Space response into a list of face dicts.
 
-        The Space may return:
-          - A list of face objects: [{"embedding": [...], ...}, ...]
-          - A single face dict:     {"embedding": [...], ...}
-          - A dict with a "faces" key: {"faces": [...], ...}
-          - A list of raw embedding arrays: [[...], ...]
+        The Space app.py returns:
+          [{"bbox": [x1, y1, x2, y2], "embedding": [512 floats]}, ...]
 
-        Returns a list of dicts with at minimum {"embedding": np.ndarray}.
+        Returns:
+          [{"embedding": np.ndarray(512,)}, ...]
         """
         faces = []
 
-        if isinstance(result, list):
-            for item in result:
-                if isinstance(item, dict) and "embedding" in item:
-                    emb = np.array(item["embedding"], dtype=np.float32)
-                    faces.append({"embedding": emb})
-                elif isinstance(item, (list, np.ndarray)):
-                    # Raw embedding array in a list
-                    emb = np.array(item, dtype=np.float32)
-                    faces.append({"embedding": emb})
+        if not isinstance(result, list):
+            print(f"[HFModel] Unexpected response type: {type(result)}, value: {result}")
+            return faces
 
-        elif isinstance(result, dict):
-            # Could be {"faces": [...]} or a single face {"embedding": [...]}
-            if "faces" in result:
-                for item in result["faces"]:
-                    if isinstance(item, dict) and "embedding" in item:
-                        emb = np.array(item["embedding"], dtype=np.float32)
-                        faces.append({"embedding": emb})
-            elif "embedding" in result:
-                emb = np.array(result["embedding"], dtype=np.float32)
-                faces.append({"embedding": emb})
+        for item in result:
+            if isinstance(item, dict) and "embedding" in item:
+                emb = item["embedding"]
+                if emb:  # skip empty embeddings
+                    faces.append({
+                        "embedding": np.array(emb, dtype=np.float32)
+                    })
 
         return faces
