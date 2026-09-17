@@ -1,14 +1,3 @@
-import os
-from insightface.app import FaceAnalysis
-
-def load_model():
-    # Using buffalo_s model.
-    app = FaceAnalysis(name="buffalo_s", providers=['CPUExecutionProvider'])
-    
-    try:
-        # try GPU (ctx_id=0), fall back to CPU (ctx_id=-1) if unavailable
-        app.prepare(ctx_id=0, det_size=(640, 640))
-    except Exception:
-        app.prepare(ctx_id=-1, det_size=(640, 640))
-        
-    return app
+# This file is no longer used.
+# InsightFace local model has been replaced by the HuggingFace Space API.
+# See models/hf_model.py for the new implementation.
