@@ -5,6 +5,9 @@ Replaces local InsightFace by calling the remote Gradio Space:
 
 API endpoint : /process_image
 Response fmt : JSON list of {"bbox": [...], "embedding": [...512 floats...]}
+
+Requires HF_TOKEN env variable to avoid ZeroGPU rate limits.
+Get your token at: https://huggingface.co/settings/tokens
 """
 
 import json
@@ -31,7 +34,15 @@ class HFSpaceModel:
 
     def __init__(self):
         print(f"Connecting to HuggingFace Space: {HF_SPACE_ID}")
-        self.client = Client(HF_SPACE_URL)
+
+        # Read HF token from environment — required to bypass ZeroGPU rate limits
+        hf_token = os.environ.get("HF_TOKEN")
+        if hf_token:
+            print("HF_TOKEN found — connecting with authentication.")
+        else:
+            print("WARNING: HF_TOKEN not set. ZeroGPU rate limits will apply.")
+
+        self.client = Client(HF_SPACE_URL, hf_token=hf_token)
         print("HuggingFace Space client initialized successfully!")
 
     def get_faces(self, image_bytes: bytes) -> list:
