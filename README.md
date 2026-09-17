@@ -204,7 +204,7 @@ smart-attendance/
         │   ├── api_server.py             ← Flask REST API
         │   ├── requirements.txt          ← Python dependencies
         │   └── models/
-        │       └── insightface_model.py  ← InsightFace model loader
+        │       └── hf_model.py           ← HuggingFace Space API Client
         │
         └── src/
             ├── app.js                    ← Express app setup & static serving
@@ -249,9 +249,9 @@ smart-attendance/
 
 ## Face Recognition Model
 
-### Model: InsightFace `buffalo_l`
+### Model: InsightFace `buffalo_l` (via HuggingFace Space)
 
-The system uses **InsightFace** (`buffalo_l` pack) — a state-of-the-art deep learning face analysis framework that runs entirely locally with no cloud dependency.
+The system uses **InsightFace** (`buffalo_l` pack) for state-of-the-art deep learning face analysis. Face detection and embedding extraction are offloaded to a **remote HuggingFace Space API** (`nitishsaini44/baffaloL_model`), keeping the local Python server lightweight and eliminating heavy ML dependencies.
 
 #### Sub-models in `buffalo_l`
 
@@ -298,14 +298,14 @@ Webcam frame (base64)
 #### Enrollment Flow
 1. Student added to MongoDB via Node.js API
 2. Face image sent to Python `/api/add-student`
-3. InsightFace extracts 512-dim embedding
+3. Python server queries the **HuggingFace Space API** to extract the 512-dim embedding
 4. Embedding saved to `Student.faceEmbedding[]` in MongoDB
 
 #### Recognition Flow (Single Face)
 1. Camera captures frame → base64 encoded
 2. Node.js `POST /api/attendance/face` → Python `/api/recognize`
-3. InsightFace detects & embeds the face
-4. Vectorized cosine similarity against all enrolled students
+3. Python server queries the **HuggingFace Space API** to detect & embed the face
+4. Vectorized cosine similarity computed locally against all enrolled students
 5. Best match above threshold → attendance marked in MongoDB
 
 #### Recognition Flow (Multiple Faces)
@@ -320,14 +320,12 @@ Webcam frame (base64)
 
 ```txt
 numpy          ← Vectorized embedding math
-opencv-python  ← Image decode & preprocessing (cv2)
-torch          ← PyTorch backend for ONNX model inference
-insightface    ← buffalo_l model pack (detection + recognition)
-onnxruntime    ← Runs the .onnx sub-models
+gradio_client  ← Client for the remote HuggingFace Space API
 flask          ← REST API server
 flask-cors     ← Cross-origin support for Node.js requests
 pymongo        ← MongoDB driver
-python-dotenv  ← Auto-loads server/.env at startup
+python-dotenv  ← Auto-loads .env at startup
+gunicorn       ← Production WSGI server
 ```
 
 ---
@@ -365,7 +363,7 @@ python-dotenv  ← Auto-loads server/.env at startup
 | **Frontend** | React 18, Vite, React Router, Axios |
 | **Styling** | Vanilla CSS with custom design tokens (teal palette) |
 | **Backend API** | Node.js, Express.js, JWT Auth, Multer |
-| **Face Recognition** | Python 3.8+, Flask, InsightFace (`buffalo_l`), OpenCV, ONNX Runtime |
+| **Face Recognition** | Python 3.8+, Flask, Gradio Client, Remote HuggingFace Space API |
 | **Database** | MongoDB Atlas with Mongoose ODM |
 | **Orchestration** | `concurrently` — all 3 services via single `npm run dev` |
 
@@ -437,6 +435,7 @@ python-dotenv  ← Auto-loads server/.env at startup
 | `JWT_SECRET` | JWT signing secret | — |
 | `JWT_EXPIRES_IN` | JWT token lifespan | `7d` |
 | `FACE_API_URL` | Python face API base URL | `http://localhost:5001/api` |
+| `HF_TOKEN` | HuggingFace token to bypass ZeroGPU limits | — |
 
 ### Client (`client/.env`)
 | Variable | Description | Default |
