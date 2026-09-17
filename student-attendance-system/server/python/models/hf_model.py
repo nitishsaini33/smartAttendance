@@ -35,14 +35,23 @@ class HFSpaceModel:
     def __init__(self):
         print(f"Connecting to HuggingFace Space: {HF_SPACE_ID}")
 
-        # Read HF token from environment — required to bypass ZeroGPU rate limits
-        hf_token = os.environ.get("HF_TOKEN")
+        # Read HF token from environment — required to bypass ZeroGPU rate limits.
+        # huggingface_hub (used internally by gradio_client) automatically picks up
+        # the HUGGING_FACE_HUB_TOKEN / HF_TOKEN env vars, but we also call login()
+        # explicitly for older versions of the library.
+        hf_token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
         if hf_token:
-            print("HF_TOKEN found — connecting with authentication.")
+            print("HF_TOKEN found — logging in with authentication.")
+            try:
+                from huggingface_hub import login
+                login(token=hf_token, add_to_git_credential=False)
+                print("huggingface_hub login successful.")
+            except Exception as e:
+                print(f"WARNING: huggingface_hub login failed: {e}")
         else:
             print("WARNING: HF_TOKEN not set. ZeroGPU rate limits will apply.")
 
-        self.client = Client(HF_SPACE_URL, hf_token=hf_token)
+        self.client = Client(HF_SPACE_URL)
         print("HuggingFace Space client initialized successfully!")
 
     def get_faces(self, image_bytes: bytes) -> list:
