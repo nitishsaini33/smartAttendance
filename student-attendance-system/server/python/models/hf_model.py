@@ -10,9 +10,9 @@ Requires HF_TOKEN env variable to avoid ZeroGPU rate limits.
 Get your token at: https://huggingface.co/settings/tokens
 """
 
-import io
 import json
 import os
+import tempfile
 import numpy as np
 
 from gradio_client import Client, handle_file
@@ -54,6 +54,10 @@ class HFSpaceModel:
         self.client = Client(HF_SPACE_URL)
         print("HuggingFace Space client initialized successfully!")
 
+    # Use /dev/shm (Linux RAM-disk) when available — zero actual disk I/O.
+    # Falls back to the system temp dir on Windows / macOS.
+    _TMP_DIR = "/dev/shm" if os.path.isdir("/dev/shm") else tempfile.gettempdir()
+
     def get_faces(self, image_bytes: bytes) -> list:
         """
         Send raw image bytes to the HF Space and get back face data.
@@ -65,14 +69,19 @@ class HFSpaceModel:
             List of face dicts: [{"embedding": np.ndarray(512,)}, ...]
             Returns empty list if no faces detected or on error.
         """
+        tmp_path = None
         try:
-            # Wrap bytes in an in-memory buffer — no disk I/O needed
-            image_buffer = io.BytesIO(image_bytes)
-            image_buffer.name = "image.jpg"  # gradio_client uses the name for MIME detection
+            # Write to /dev/shm (RAM filesystem) so gradio_client gets a valid
+            # file path while avoiding any real disk I/O on Linux servers.
+            fd, tmp_path = tempfile.mkstemp(suffix=".jpg", dir=self._TMP_DIR)
+            try:
+                os.write(fd, image_bytes)
+            finally:
+                os.close(fd)
 
             # Call the /process_image endpoint on the HF Space
             result_string = self.client.predict(
-                image=handle_file(image_buffer),
+                image=handle_file(tmp_path),
                 api_name="/process_image"
             )
 
@@ -97,6 +106,12 @@ class HFSpaceModel:
         except Exception as e:
             print(f"[HFModel] Error calling HF Space: {e}")
             return []
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                except Exception:
+                    pass
 
     def _parse_response(self, result) -> list:
         """
