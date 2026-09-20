@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import studentService from '../../services/studentService';
 import StudentCard from './StudentCard';
 import { UserPlus, Search, Download, Users, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
-import Loader from '../common/Loader';
+import { SkeletonTableRows } from '../common/Skeleton';
 import toast from 'react-hot-toast';
 import Card from '../common/Card';
 
@@ -74,9 +74,6 @@ const StudentList = () => {
         }
     };
 
-    if (loading) {
-        return <Loader />;
-    }
 
     const classOptions = ['all', ...new Set(students.map((student) => student.class || 'N/A'))];
 
@@ -86,7 +83,7 @@ const StudentList = () => {
             : null;
 
     return (
-        <div className="space-y-6 animate-fadeIn">
+        <div className="space-y-6 page-enter">
             {/* Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -108,6 +105,7 @@ const StudentList = () => {
             <Card className="p-4 sm:p-6">
                 {/* Filters */}
                 <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+
                     <div className="relative sm:col-span-2">
                         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
                         <input
@@ -131,7 +129,11 @@ const StudentList = () => {
                     </select>
                 </div>
 
-                {filteredStudents?.length > 0 ? (
+                {/* Skeleton table while loading */}
+                {loading ? (
+                    <SkeletonTableRows rows={6} />
+                ) : filteredStudents?.length > 0 ? (
+
                     <>
                         {/* ===== DESKTOP TABLE (hidden on mobile) ===== */}
                         <div className="hidden md:block overflow-x-auto rounded-2xl border border-zinc-800">

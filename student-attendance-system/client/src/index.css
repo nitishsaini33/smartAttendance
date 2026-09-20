@@ -87,11 +87,50 @@ body {
          shadow-sm rounded-2xl p-6;
 }
 
-/* Animation */
+/* =============================================
+   Skeleton shimmer loader
+   ============================================= */
 
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #27272a 0%,
+    #3f3f46 40%,
+    #27272a 80%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  will-change: background-position;
+}
+
+/* =============================================
+   Page transition — fade + slide up on enter
+   ============================================= */
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: pageEnter 0.25s ease-out both;
+}
+
+/* Legacy fadeIn kept for backward compat */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fadeIn {
@@ -110,4 +149,4 @@ body {
 
 .text-subtext {
   @apply text-sm text-zinc-400;
-}
+}

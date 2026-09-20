@@ -15,5 +15,17 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React — cached separately, changes rarely
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // Charts — large lib, cached until recharts updates
+          'vendor-charts': ['recharts'],
+          // Icons — large lib, cached until lucide-react updates
+          'vendor-icons': ['lucide-react'],
+        }
+      }
+    }
   },
-});
+});
