@@ -10,8 +10,8 @@ Requires HF_TOKEN env variable to avoid ZeroGPU rate limits.
 Get your token at: https://huggingface.co/settings/tokens
 """
 
+import io
 import json
-import tempfile
 import os
 import numpy as np
 
@@ -65,16 +65,14 @@ class HFSpaceModel:
             List of face dicts: [{"embedding": np.ndarray(512,)}, ...]
             Returns empty list if no faces detected or on error.
         """
-        tmp_path = None
         try:
-            # Write bytes to a temp file so gradio_client can upload it
-            with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
-                tmp.write(image_bytes)
-                tmp_path = tmp.name
+            # Wrap bytes in an in-memory buffer — no disk I/O needed
+            image_buffer = io.BytesIO(image_bytes)
+            image_buffer.name = "image.jpg"  # gradio_client uses the name for MIME detection
 
             # Call the /process_image endpoint on the HF Space
             result_string = self.client.predict(
-                image=handle_file(tmp_path),
+                image=handle_file(image_buffer),
                 api_name="/process_image"
             )
 
@@ -99,12 +97,6 @@ class HFSpaceModel:
         except Exception as e:
             print(f"[HFModel] Error calling HF Space: {e}")
             return []
-        finally:
-            if tmp_path and os.path.exists(tmp_path):
-                try:
-                    os.unlink(tmp_path)
-                except Exception:
-                    pass
 
     def _parse_response(self, result) -> list:
         """
